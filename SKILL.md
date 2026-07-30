@@ -34,8 +34,57 @@ skipped under load:
 node tools/post.mjs --author "Who" --text "What happened" [--shot path.png] [--kind note|done|problem]
 ```
 
-A reference implementation of the CLI and a React reading column that renders it
-live at <https://github.com/vibegameengine/gauntlet-loop>.
+## Setting it up in a new project — do not reinvent it
+
+This skill ships the implementation. Copy it; do not write your own, or every
+project gets a different post format, a different cap and a different set of
+rules quietly dropped.
+
+**1. The command.** `post.mjs` sits next to this file. Copy it into the project:
+
+```bash
+mkdir -p scripts && cp "$CLAUDE_SKILL_DIR/post.mjs" scripts/post.mjs
+```
+
+If `$CLAUDE_SKILL_DIR` is not set, it is the directory this SKILL.md is in
+(`~/.claude/skills/agent-work-feed/`). It has no dependencies — plain Node, one
+file — and enforces the image requirement and the character cap.
+
+**2. Decide where the feed lives.** `post.mjs` writes to `tmp/dashboard/feed.jsonl`
+by default. Put it wherever the project's dev server can serve it, and make sure
+it is gitignored — it is session state, not source.
+
+**3. Put the rule in the project's instructions file.** This is the step that
+actually matters (see below). Paste this into `CLAUDE.md` / `AGENTS.md`:
+
+> ## The work feed
+>
+> There is a shared feed at `tmp/dashboard/feed.jsonl`. **If you are an agent
+> working in this repo, you post to it yourself** — a running stream, not a
+> summary at the end, so the human can read what is happening without waiting
+> for anyone to finish.
+>
+> ```
+> node scripts/post.mjs --author "<who you are>" --text "..." --shot <path.png> [--kind note|done|problem]
+> ```
+>
+> Post when you start; **when you work out WHY something is wrong — the finding
+> and the number, before you fix it**; when you land something that changes the
+> picture; immediately with `--kind problem` when blocked or when the fix belongs
+> in a file you do not own; and at the end with the measured result.
+>
+> **Every post carries an image** — the command refuses without one. If a post
+> genuinely cannot have one, and that should be rare, say why with
+> `--nomedia "<reason>"`. Posts are capped at 250 characters, URLs excluded.
+> Concrete, with numbers, no status pings.
+
+**4. A reading surface.** `dashboard/` next to this file is a React column that
+renders the feed; wiring instructions are in its README. You do not need it to
+start — the feed is a text file, and `tail -f` plus an image viewer is a working
+version-zero. Add the surface when someone is actually watching.
+
+A published copy of all of this, with its own README:
+<https://github.com/vibegameengine/agent-work-feed>.
 
 ## Put the rule in the repo, not in the prompts
 
