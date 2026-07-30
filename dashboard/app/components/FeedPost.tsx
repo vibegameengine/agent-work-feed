@@ -37,6 +37,11 @@ function FeedPostImpl({ post, now, nonce }: Props): ReactNode {
       </div>
       <PostBody text={post.text} />
       {post.shot ? <PostMedia src={post.shot} author={post.author} nonce={nonce} /> : null}
+      {/* The declared escape hatch, shown rather than merely recorded — an
+          exception the reader never sees is one that stops being an exception. */}
+      {!post.shot && post.nomedia ? (
+        <p className="post-nomedia">no image — {post.nomedia}</p>
+      ) : null}
     </article>
   );
 }

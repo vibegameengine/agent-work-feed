@@ -1,11 +1,10 @@
-/** `tmp/dashboard/feed.jsonl` — the append-only stream every agent posts to. */
+/** The append-only stream every agent posts to. Its URL is `FEED_URL` in `config.ts`. */
 
+import { FEED_URL } from "./config";
 import { toFeed } from "./parse";
 import type { Post } from "./types";
 import { usePolling, type Polled } from "./usePolling";
 
-const URL = "/tmp/dashboard/feed.jsonl";
-
 export function useFeed(nonce: number): Polled<Post[]> {
-  return usePolling(URL, toFeed, nonce);
+  return usePolling(FEED_URL, toFeed, nonce);
 }

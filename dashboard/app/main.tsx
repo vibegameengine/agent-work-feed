@@ -7,6 +7,7 @@ import "./dashboard.css";
 const host = document.getElementById("root");
 if (!host) throw new Error("dashboard: #root missing");
 
-// Deliberately not StrictMode: its double-mount would build, tear down and
-// rebuild the live iframe's WebGL context on every view switch.
+// Deliberately not StrictMode: its double-mount fires the feed poll twice on
+// every mount, which doubles the request rate against a file agents are writing
+// to and makes the network tab useless for telling whether polling works.
 createRoot(host).render(<App />);

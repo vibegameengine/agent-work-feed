@@ -16,27 +16,48 @@ it has them, and the user reads the raw thing.
 
 | | |
 |---|---|
-| [`SKILL.md`](SKILL.md) | The practice: what to ask agents to post, what to enforce, and the failure modes. Drop it in `~/.claude/skills/agent-work-feed/` to use it as a Claude Code skill, or just read it. |
-| [`tools/post.mjs`](tools/post.mjs) | The posting command. One line, appends one post. |
-| [`dashboard/`](dashboard/) | The reading surface: a React column that renders the feed. |
+| [`SKILL.md`](SKILL.md) | The practice: what to ask agents to post, what to enforce, and the failure modes — plus a literal five-minute setup from an empty directory. Drop it in `~/.claude/skills/agent-work-feed/` to use it as a Claude Code skill, or just read it. |
+| [`scripts/post.mjs`](scripts/post.mjs) | The posting command. One line, appends one post. Copy it to `scripts/post.mjs` in your project. |
+| [`dashboard/`](dashboard/) | The reading surface: a React column that renders the feed. Copy `dashboard/app/` to `src/dashboard/`. |
+
+If you installed this as a **skill** rather than cloning the repo, the layout is
+slightly different: `post.mjs` sits at the top level, next to `SKILL.md`. The
+table at the top of [`SKILL.md`](SKILL.md) says which is which. In your own
+project the file is called `scripts/post.mjs` either way — that name appears in
+the command's error messages, in the `CLAUDE.md` boilerplate, and in the
+dashboard's empty state.
 
 ## Post
 
 ```bash
-node tools/post.mjs \
+node scripts/post.mjs \
   --author "Builder: light" \
   --text "The fill rig is 4x too orange in the shadows. Reference darks are rgb(62,47,46); ours are rgb(113,84,61). The grade is innocent." \
-  --shot shots/frame.png \
+  --shot tmp/shots/frame.png \
   --kind note
 ```
 
-Appended to `feed.jsonl`, one JSON object per line — append-only, so concurrent
-agents never clobber each other and no locking is needed:
+Appended to `tmp/dashboard/feed.jsonl`, one JSON object per line — append-only,
+so concurrent agents never clobber each other and no locking is needed:
 
 ```json
 { "id": "…", "at": "<ISO>", "author": "…",
   "kind": "note" | "done" | "problem", "text": "…", "shot": "/path.png" }
 ```
+
+That path is the default and the dashboard fetches `/tmp/dashboard/feed.jsonl`
+to match. **The two have to agree**, and the file has to be under the dev
+server's root, or the page shows its empty state forever with nothing to say
+why. Change `FEED` in `scripts/post.mjs` and `FEED_URL` in
+`src/dashboard/config.ts` together, or neither.
+
+## Setup
+
+[`SKILL.md`](SKILL.md) has both routes: dropping the feed into a project you
+already have, and standing one up from an empty directory in five minutes
+(`package.json`, `vite.config.ts`, `tsconfig.json`, `index.html`, the copies, and
+the URL to open). Follow it literally; it was rewritten after a cold-start run
+proved the earlier version could not be.
 
 ## Three rules the command enforces
 
@@ -57,8 +78,15 @@ thing you promise to look at later, and nobody does.
 **250 characters, URLs excluded, rejected rather than truncated.** The cap is the
 point: forced to cut, an author leads with the finding and the number instead of
 narrating their approach. Truncation would eat the last sentence, which is
-usually the conclusion — so the author decides what survives. URLs are free,
-because a long path should never be the reason a finding gets cut.
+usually the conclusion — so the author decides what survives. URLs and file paths
+are free, because a long path should never be the reason a finding gets cut —
+capped at 500 free characters per post, so a paragraph cannot get through by
+being written as a list of paths.
+
+Two smaller things it also refuses, because each one produced a defect you can
+only find by eye: a `--kind` outside `note|done|problem` (the dashboard would
+silently show it as a note), and a `--shot` outside the project root (the dev
+server cannot serve it, so the post renders a broken image).
 
 ## The one decision that determines whether it works
 
@@ -93,10 +121,13 @@ useful and together they turn a thing people read into a thing people scan once
 and close.
 
 To wire it into an existing Vite project: copy `dashboard/app/` to
-`src/dashboard/` and `dashboard/dashboard.html` to the project root, add `react`,
-`react-dom` and `@vitejs/plugin-react` as dev dependencies, set
-`"jsx": "react-jsx"` in `tsconfig.json`, and serve `feed.jsonl` where
-`useFeed.ts` expects it.
+`src/dashboard/` and `dashboard/dashboard.html` to the project root, add
+`react react-dom @types/react @types/react-dom @vitejs/plugin-react` as dev
+dependencies, set `"jsx": "react-jsx"` in `tsconfig.json`, and edit
+`src/dashboard/config.ts` — the project name, the lede and `FEED_URL` all live
+there, and shipping it unedited leaves the page branded "Your project".
+[`dashboard/README.md`](dashboard/README.md) has the details, including the Vite
+plugin scoping that keeps React out of your production bundle.
 
 ## Related
 

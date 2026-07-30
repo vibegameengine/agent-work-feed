@@ -36,6 +36,7 @@ export function toFeed(text: string): Post[] {
     const textBody = str(raw.text);
     if (!id || !textBody) continue;
     const shot = str(raw.shot);
+    const nomedia = str(raw.nomedia);
     posts.push({
       id,
       at: str(raw.at),
@@ -43,6 +44,7 @@ export function toFeed(text: string): Post[] {
       kind: postKind(raw.kind),
       text: textBody,
       ...(shot ? { shot } : {}),
+      ...(!shot && nomedia ? { nomedia } : {}),
     });
   }
   // The file is append-only, so it is oldest-first on disk. The feed reads newest-first.

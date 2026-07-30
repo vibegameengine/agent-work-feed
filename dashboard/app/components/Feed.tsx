@@ -3,11 +3,12 @@
  *
  * A fan-out of agents is opaque by construction: several file sets change at
  * once for minutes and everything the user hears arrives second-hand. Every
- * agent appends to `tmp/dashboard/feed.jsonl` itself, so this reads newest-first
- * and the user follows the work live instead of waiting for a summary.
+ * agent appends to the feed file itself, so this reads newest-first and the user
+ * follows the work live instead of waiting for a summary.
  */
 
 import type { ReactNode } from "react";
+import { POST_COMMAND } from "../config";
 import { dayKey, dayLabel } from "../format";
 import type { Post } from "../types";
 import { FeedPost } from "./FeedPost";
@@ -26,7 +27,7 @@ export function Feed({ posts, error, now, nonce }: Props): ReactNode {
     );
   }
   if (posts.length === 0) {
-    return <p className="empty">Nothing posted yet. Agents write here with scripts/post.mjs.</p>;
+    return <p className="empty">Nothing posted yet. Agents write here with {POST_COMMAND}.</p>;
   }
 
   let day = "";

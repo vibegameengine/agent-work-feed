@@ -188,6 +188,17 @@
   letter-spacing: 0;
 }
 
+/* The declared no-image exception. Quiet on purpose: it has to be visible, so
+   the exception stays deliberate, without competing with a post that has a
+   picture. */
+.post-nomedia {
+  margin-top: var(--s3);
+  font-size: var(--fs-meta);
+  color: var(--ink-3);
+  letter-spacing: 0;
+  font-style: italic;
+}
+
 @media (max-width: 620px) {
   .post {
     border-radius: var(--r-l);

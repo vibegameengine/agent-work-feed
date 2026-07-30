@@ -6,6 +6,7 @@
  */
 
 import type { ReactNode } from "react";
+import { BRAND } from "../config";
 import { POLL_MS } from "../usePolling";
 
 interface Props {
@@ -19,7 +20,7 @@ export function Header({ count, error, onReload }: Props): ReactNode {
   return (
     <header className="chrome">
       <div className="chrome-inner">
-        <span className="chrome-brand">Zoo Drift</span>
+        <span className="chrome-brand">{BRAND}</span>
         <span
           className={error ? "status status-off" : "status"}
           title={`feed.jsonl is re-read every ${Math.round(POLL_MS / 1000)} seconds`}

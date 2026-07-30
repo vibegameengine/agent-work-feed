@@ -1,10 +1,9 @@
 /**
- * Poll a file served by vite from the project root and parse it.
+ * Poll a file served by the dev server from the project root and parse it.
  *
- * Both state files are rewritten while agents work, so the page re-reads them on
- * a fixed cadence and on demand (the reload button bumps `nonce`). The URL is
- * cache-busted for the same reason the screenshots are: the files are
- * overwritten in place.
+ * The feed grows while agents work, so the page re-reads it on a fixed cadence
+ * and on demand (the reload button bumps `nonce`). The URL is cache-busted for
+ * the same reason the screenshots are: the files change under the browser.
  */
 
 import { useEffect, useState } from "react";

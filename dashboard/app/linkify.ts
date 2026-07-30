@@ -27,9 +27,20 @@ export type Segment = TextSegment | LinkSegment;
  * Absolute http(s) URLs, or root-relative paths that clearly name a file
  * (`/world-test.html?view=top`, `/tmp/shots/x.png`). A bare `src/scene/sky.ts`
  * is NOT matched: source paths are mentioned constantly and are not links.
+ *
+ * Two rules the alternation has to respect, both learned by getting them wrong:
+ *
+ *   - LONGEST EXTENSION FIRST. Alternation is ordered, so `json` before `jsonl`
+ *     turned "/tmp/dashboard/feed.jsonl" into a link to `…/feed.json` plus a
+ *     stray "l" — a 404 and a typo in the one path this project names most.
+ *   - THE PATH MUST START A TOKEN. The leading `/` only counts at the start of
+ *     the text or after whitespace or an opening bracket. Without that,
+ *     "copy scripts/post.mjs there" rendered as the word "scripts" followed by a
+ *     link to "/post.mjs", which does not exist — and contradicted the promise
+ *     right above that bare source paths are not matched.
  */
 const PATTERN =
-  /(https?:\/\/[^\s<>"'`]+)|(\/[\w.\-/]*\.(?:html|png|jpg|jpeg|webp|gif|json|jsonl|mjs|glb)(?:\?[\w=&.\-%+/]*)?)/gu;
+  /(https?:\/\/[^\s<>"'`]+)|((?<=^|[\s([{<"'`])\/[\w.\-/]*\.(?:jsonl|json|jpeg|jpg|html|png|webp|gif|mjs|glb)(?:\?[\w=&.\-%+/]*)?)/gu;
 
 /** Trailing sentence punctuation is part of the prose, not of the URL. */
 function trimTrailing(url: string): { url: string; rest: string } {

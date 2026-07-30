@@ -24,14 +24,15 @@ coordination is needed.
 
 ```
 { "id": "...", "at": "<ISO timestamp>", "author": "...",
-  "kind": "note" | "done" | "problem", "text": "...", "shot": "/path.png"? }
+  "kind": "note" | "done" | "problem", "text": "...",
+  "shot": "/path.png"? , "nomedia": "why there is no shot"? }
 ```
 
 One command to post — keep it to one, because anything that takes two steps gets
 skipped under load:
 
 ```bash
-node tools/post.mjs --author "Who" --text "What happened" [--shot path.png] [--kind note|done|problem]
+node scripts/post.mjs --author "Who" --text "What happened" [--shot path.png] [--kind note|done|problem]
 ```
 
 ## Setting it up in a new project — do not reinvent it
@@ -40,19 +41,51 @@ This skill ships the implementation. Copy it; do not write your own, or every
 project gets a different post format, a different cap and a different set of
 rules quietly dropped.
 
-**1. The command.** `post.mjs` sits next to this file. Copy it into the project:
+There are two places the implementation can be sitting, and they are laid out
+differently. Work out which you have before step 1:
+
+| You have | `post.mjs` is at | the dashboard is at |
+|---|---|---|
+| the **skill** installed (`~/.claude/skills/agent-work-feed/`) | `post.mjs`, next to this SKILL.md | `dashboard/` |
+| a **clone** of <https://github.com/vibegameengine/agent-work-feed> | `scripts/post.mjs` | `dashboard/` |
+
+Below, `$SRC` means whichever of those two directories you are copying from.
+For the skill route `$SRC` is `$CLAUDE_SKILL_DIR` — and if that variable is not
+set, it is the directory this SKILL.md is in.
+
+**1. The command.**
 
 ```bash
-mkdir -p scripts && cp "$CLAUDE_SKILL_DIR/post.mjs" scripts/post.mjs
+mkdir -p scripts
+cp "$SRC/post.mjs" scripts/post.mjs         # skill route
+cp "$SRC/scripts/post.mjs" scripts/post.mjs # repo route
 ```
 
-If `$CLAUDE_SKILL_DIR` is not set, it is the directory this SKILL.md is in
-(`~/.claude/skills/agent-work-feed/`). It has no dependencies — plain Node, one
-file — and enforces the image requirement and the character cap.
+It has no dependencies — plain Node, one file — and enforces the image
+requirement, the character cap, the `--kind` union, and that a screenshot is
+somewhere the dev server can actually serve.
 
-**2. Decide where the feed lives.** `post.mjs` writes to `tmp/dashboard/feed.jsonl`
-by default. Put it wherever the project's dev server can serve it, and make sure
-it is gitignored — it is session state, not source.
+Wherever you copy it, **call it `scripts/post.mjs` in the project**. That is the
+name in the boilerplate below, in the command's own error messages, and in the
+dashboard's empty state; renaming it means fixing three other places.
+
+**2. Where the feed lives.** `post.mjs` appends to `tmp/dashboard/feed.jsonl` and
+the dashboard fetches `/tmp/dashboard/feed.jsonl`. Those two must name the same
+file. If you change one, change the other — `FEED` in `scripts/post.mjs` (or the
+`FEED_FILE` env var) and `FEED_URL` in `src/dashboard/config.ts`. When they
+disagree the page sits on its empty state forever and nothing tells you why.
+
+The feed file, and any screenshots posts point at, **must live under the dev
+server's root** — for Vite, that is the project directory itself. That is the
+one genuinely load-bearing assumption in the design, and it is worth saying out
+loud because it sounds wrong: `tmp/` is gitignored *and* served. Vite serves any
+file under the root that is not excluded, so `tmp/dashboard/feed.jsonl` is
+readable at `/tmp/dashboard/feed.jsonl` in dev with no config at all. Gitignored
+and served are unrelated properties; the feed is session state, so it wants both.
+
+If your server does not serve the root that way — or you want the feed to
+survive a production build — put it under `public/` instead (`public/feed/feed.jsonl`
+on disk, `/feed/feed.jsonl` over HTTP) and set both constants to match.
 
 **3. Put the rule in the project's instructions file.** This is the step that
 actually matters (see below). Paste this into `CLAUDE.md` / `AGENTS.md`:
@@ -78,13 +111,106 @@ actually matters (see below). Paste this into `CLAUDE.md` / `AGENTS.md`:
 > `--nomedia "<reason>"`. Posts are capped at 250 characters, URLs excluded.
 > Concrete, with numbers, no status pings.
 
-**4. A reading surface.** `dashboard/` next to this file is a React column that
-renders the feed; wiring instructions are in its README. You do not need it to
-start — the feed is a text file, and `tail -f` plus an image viewer is a working
-version-zero. Add the surface when someone is actually watching.
+**4. A reading surface.** `$SRC/dashboard/` is a React column that renders the
+feed; wiring instructions are in `dashboard/README.md`, and the five-minute
+version is below. You do not need it to start — the feed is a text file, and
+`tail -f` plus an image viewer is a working version-zero. Add the surface when
+someone is actually watching.
+
+Whatever route you took, **edit `src/dashboard/config.ts`** afterwards: it holds
+the project name, the page's lede, and `FEED_URL`. Ship it unedited and your
+dashboard is branded "Your project".
 
 A published copy of all of this, with its own README:
 <https://github.com/vibegameengine/agent-work-feed>.
+
+## From scratch in five minutes
+
+Everything above assumes a project to put the feed in. If there is no project —
+you just want the feed standing up — this is the whole of it. Run it literally.
+
+```bash
+mkdir feed-project && cd feed-project
+npm init -y && npm pkg set type=module
+npm i -D vite typescript react react-dom @types/react @types/react-dom @vitejs/plugin-react
+mkdir -p scripts src/dashboard tmp/dashboard tmp/shots
+cp "$SRC/post.mjs" scripts/post.mjs          # or "$SRC/scripts/post.mjs", see the table above
+cp -R "$SRC/dashboard/app/." src/dashboard/
+cp "$SRC/dashboard/dashboard.html" .
+printf 'node_modules/\ndist/\ntmp/\n' > .gitignore
+```
+
+Four files you have to write. `vite.config.ts`:
+
+```ts
+import { defineConfig } from "vite";
+import react from "@vitejs/plugin-react";
+
+// Scoped so the plugin only touches the dashboard, and `dashboard.html` is a
+// separate entry, so a production build of index.html never pulls React in.
+export default defineConfig({ plugins: [react({ include: [/src\/dashboard\/.*\.tsx?$/] })] });
+```
+
+`tsconfig.json`:
+
+```json
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "react-jsx",
+    "strict": true,
+    "noEmit": true,
+    "skipLibCheck": true,
+    "isolatedModules": true,
+    "verbatimModuleSyntax": true,
+    "types": ["vite/client"]
+  },
+  "include": ["src", "vite.config.ts"]
+}
+```
+
+`"types": ["vite/client"]` is load-bearing: `main.tsx` imports a stylesheet for
+its side effect, and without those declarations TypeScript 7 fails the build with
+`TS2882: Cannot find module or type declarations for side-effect import of
+'./dashboard.css'`.
+
+`index.html` — **not optional.** Vite needs it as the build entry; without it
+`vite build` fails outright, and `/` in dev has nothing to show:
+
+```html
+<!doctype html>
+<html lang="en">
+  <head><meta charset="utf-8" /><title>feed-project</title></head>
+  <body><p>The work feed is at <a href="/dashboard.html">/dashboard.html</a>.</p></body>
+</html>
+```
+
+And `CLAUDE.md`, containing the block from step 3 above — the step that decides
+whether any of this works.
+
+Then edit `src/dashboard/config.ts` (project name, lede) and the `<title>` in
+`dashboard.html`, and:
+
+```bash
+npx vite
+```
+
+The feed is at **<http://localhost:5173/dashboard.html>** — but read the URL Vite
+prints rather than assuming that one. If 5173 is taken it silently moves to the
+next free port, and you will spend a while looking at somebody else's dashboard
+wondering why your posts are not in it. `--port 5211 --strictPort` makes it fail
+loudly instead, which is what you want when another agent is already serving.
+
+The page says "Nothing posted yet" until the first post lands. Leave it open,
+put a real screenshot in `tmp/shots/`, and post from another shell — it picks the
+post up within fifteen seconds, or immediately on Refresh:
+
+```bash
+node scripts/post.mjs --author "You" --text "Feed is up." --shot tmp/shots/proof.png
+```
 
 ## Put the rule in the repo, not in the prompts
 
@@ -133,13 +259,23 @@ Allow a declared escape hatch — `--nomedia "<reason>"` — and record the reas
 the post. Making the exception deliberate keeps it rare; making it impossible
 just gets the rule ignored.
 
+**Render the reason.** An exception the reader never sees is not an exception, it
+is a text-only post with extra steps, and the rule quietly stops costing
+anything. The dashboard prints it under the body: *no image — <reason>*.
+
 **Images are attached, not linked.** A post is a thing you look at; a link is a
 thing you promise to look at later, and nobody does.
 
 ## Cap the posts, and reject rather than truncate
 
-Around 250 characters, **URLs excluded from the count** — a long path should
-never be the reason a finding gets cut.
+Around 250 characters, **URLs and file paths excluded from the count** — a long
+path should never be the reason a finding gets cut.
+
+That exemption needs a bound of its own, or it is a hole rather than a kindness:
+a post written entirely as `/a/b/c.ts /d/e/f.ts …` counts as zero and sails
+through at any length. The command frees the first 500 characters of URL and
+path per post; past that they cost like ordinary text. A path only qualifies if
+it starts a token and names a file, so a bare `/usr` pays its way.
 
 The cap is the point, not a technicality. Forced to cut, an author leads with the
 finding and the number and drops the narration of their approach. Given room,
