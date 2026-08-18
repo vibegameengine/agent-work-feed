@@ -9,6 +9,11 @@
    stop reading as separate things. */
 .feed {
   display: grid;
+  /* minmax(0, …) rather than the default 1fr: a grid item's min-width is auto,
+     so one unbreakable token — and post.mjs deliberately exempts 500 characters
+     of paths and URLs from the cap — stretches the track past the viewport and
+     carries the images off the right edge with it. */
+  grid-template-columns: minmax(0, 1fr);
   gap: 30px;
 }
 
@@ -183,7 +188,9 @@
   line-height: var(--lh-body);
   letter-spacing: var(--ls-body);
   color: var(--ink);
-  overflow-wrap: break-word;
+  /* anywhere, not break-word: only this one contributes to min-content, which
+     is what decides whether a pasted path widens the column. */
+  overflow-wrap: anywhere;
   text-wrap: pretty;
 }
 

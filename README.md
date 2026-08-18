@@ -28,6 +28,8 @@ later — before the work they promise was done.
 | [`SKILL.md`](SKILL.md) | The practice: what to ask agents to post, what to enforce, and the failure modes — plus a literal five-minute setup from an empty directory. Drop it in `~/.claude/skills/agent-work-feed/` to use it as a Claude Code skill, or just read it. |
 | [`scripts/post.mjs`](scripts/post.mjs) | The posting command. One line, appends one post. Copy it to `scripts/post.mjs` in your project. |
 | [`dashboard/`](dashboard/) | The reading surface: a React column that renders the feed. Copy `dashboard/app/` to `src/dashboard/`. |
+| [`scripts/comment.mjs`](scripts/comment.mjs), [`inbox.mjs`](scripts/inbox.mjs), [`ack.mjs`](scripts/ack.mjs) | The return path: the human's half, the hook that delivers it into a running agent, and the receipt the agent sends back. Copy all three, plus `comment.d.mts` beside them. |
+| [`dashboard/vite.feed-comments.ts`](dashboard/vite.feed-comments.ts) | The dev-only endpoint the reply box posts to. Without it the box renders, accepts typing, and 404s on send. |
 
 ## Reply, don't just watch
 
@@ -146,10 +148,13 @@ useful and together they turn a thing people read into a thing people scan once
 and close.
 
 To wire it into an existing Vite project: copy `dashboard/app/` to
-`src/dashboard/` and `dashboard/dashboard.html` to the project root, add
-`react react-dom @types/react @types/react-dom @vitejs/plugin-react` as dev
-dependencies, set `"jsx": "react-jsx"` in `tsconfig.json`, and edit
-`src/dashboard/config.ts` — the project name, the lede and `FEED_URL` all live
+`src/dashboard/`, `dashboard/dashboard.html` to the project root, and
+`dashboard/vite.feed-comments.ts` to `dashboard/`; add
+`react react-dom @types/react @types/react-dom @vitejs/plugin-react @types/node`
+as dev dependencies; register the endpoint next to the React plugin —
+`plugins: [react({ include: [/src/dashboard/.*.tsx?$/] }), feedComments()]`,
+without which the reply box 404s on send; set `"jsx": "react-jsx"` in
+`tsconfig.json`, and edit `src/dashboard/config.ts` — the project name, the lede and `FEED_URL` all live
 there, and shipping it unedited leaves the page branded "Your project".
 [`dashboard/README.md`](dashboard/README.md) has the details, including the Vite
 plugin scoping that keeps React out of your production bundle.

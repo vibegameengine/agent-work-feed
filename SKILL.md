@@ -163,12 +163,22 @@ A published copy of all of this, with its own README:
 Everything above assumes a project to put the feed in. If there is no project —
 you just want the feed standing up — this is the whole of it. Run it literally.
 
+It is bash. On Windows run it in git-bash or WSL: brace expansion, `mkdir -p` and
+`printf` are not cmd or PowerShell, and PowerShell fails on the braces at parse
+time, so the whole block dies before its first command.
+
 ```bash
+# Point SRC at what you actually have, as an absolute path — the block cd's, and
+# a relative one stops resolving on the next line.
+SRC=~/projects/agent-work-feed            # a clone: the commands live in $SRC/scripts/
+# SRC=~/.claude/skills/agent-work-feed    # the skill: they sit next to SKILL.md
+
 mkdir feed-project && cd feed-project
 npm init -y && npm pkg set type=module
 npm i -D vite typescript react react-dom @types/react @types/react-dom @vitejs/plugin-react @types/node
 mkdir -p scripts src/dashboard dashboard tmp/dashboard tmp/shots .claude
-cp "$SRC/"{post,comment,inbox,ack}.mjs "$SRC/comment.d.mts" scripts/   # or "$SRC/scripts/…"
+cp "$SRC/scripts/"{post,comment,inbox,ack}.mjs "$SRC/scripts/comment.d.mts" scripts/
+# skill route instead:  cp "$SRC/"{post,comment,inbox,ack}.mjs "$SRC/comment.d.mts" scripts/
 cp -R "$SRC/dashboard/app/." src/dashboard/
 cp "$SRC/dashboard/vite.feed-comments.ts" dashboard/
 cp "$SRC/dashboard/dashboard.html" .
@@ -207,19 +217,25 @@ export default defineConfig({
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types": ["vite/client", "node"]
+    "types": ["vite/client"]
   },
   "include": ["src", "vite.config.ts"]
 }
 ```
 
-Both names in `types` are load-bearing, and because the array form is a closed
-list, anything you leave out is genuinely absent. `vite/client`: `main.tsx`
-imports a stylesheet for its side effect, and without those declarations
-TypeScript 7 fails with `TS2882: Cannot find module or type declarations for
-side-effect import of './dashboard.css'`. `node`: the comment endpoint handles a
-raw `IncomingMessage`, and without them it fails with five `TS2339`s on
-`req.method` and `req.on` — which is why `@types/node` is in the install line.
+`"types": ["vite/client"]` is load-bearing: `main.tsx` imports a stylesheet for
+its side effect, and without those declarations TypeScript 7 fails with
+`TS2882: Cannot find module or type declarations for side-effect import of
+'./dashboard.css'`.
+
+`@types/node` is load-bearing too, but in the install line and not here. The
+comment endpoint handles a raw `IncomingMessage`, and without the package `tsc`
+fails with four `TS2339`s on `req.method` and `req.on`; Vite does not bring it
+in on its own. It does **not** belong in `types` — all four states were measured,
+and with the package installed the array makes no difference, while `"node"`
+listed *without* the package installed turns the four errors into
+`TS2688: Cannot find type definition file for 'node'`, which is worse than what
+it was meant to prevent.
 
 `index.html` — **not optional.** Vite needs it as the build entry; without it
 `vite build` fails outright, and `/` in dev has nothing to show:

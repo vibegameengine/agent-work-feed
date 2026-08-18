@@ -15,8 +15,11 @@ this list.
 
 1. Copy `app/` to `src/dashboard/`, `dashboard.html` to the project root, and
    `vite.feed-comments.ts` to `dashboard/` (or another project-local dev-tools path).
-2. `npm i -D react react-dom @types/react @types/react-dom @vitejs/plugin-react`
-   — the `@types/*` two are not optional; `tsc` fails without them.
+2. `npm i -D react react-dom @types/react @types/react-dom @vitejs/plugin-react @types/node`
+   — none of the `@types/*` are optional. Without the React two `tsc` fails on the
+   components; without `@types/node` it fails on the endpoint below, which handles
+   a raw `IncomingMessage`, with four `TS2339`s on `req.method` and `req.on`.
+   Vite does not bring `@types/node` in on its own — measured, not assumed.
 3. Add `@vitejs/plugin-react` to `vite.config.ts`, scoped to the dashboard so it
    does not process the rest of the project:
    `react({ include: [/src\/dashboard\/.*\.tsx?$/] })`
