@@ -188,9 +188,11 @@ export function writeComment({ author, text, to, re, via = "cli", feedFile = FEE
 // Only when run directly: the dev server imports writeComment from this file,
 // and an import must not parse argv or exit the process.
 if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  // A flag is never a value: `--text --re x` used to post the string "--re".
   const arg = (name) => {
     const i = process.argv.indexOf(`--${name}`);
-    return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : undefined;
+    const value = i >= 0 ? process.argv[i + 1] : undefined;
+    return value && !value.startsWith("--") ? value : undefined;
   };
 
   try {

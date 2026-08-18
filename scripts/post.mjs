@@ -70,9 +70,12 @@ const MAX_CHARS = 250;
 const MAX_FREE = 500;
 const KINDS = ["note", "done", "problem"];
 
+/** A missing value used to swallow the next flag: `--shot --kind problem` reported
+ * that a file named "--kind" did not exist. A flag is never a value. */
 function arg(name, fallback) {
   const i = process.argv.indexOf(`--${name}`);
-  return i >= 0 && process.argv[i + 1] ? process.argv[i + 1] : fallback;
+  const value = i >= 0 ? process.argv[i + 1] : undefined;
+  return value && !value.startsWith("--") ? value : fallback;
 }
 
 const author = arg("author");
@@ -128,6 +131,13 @@ if (!shot && !nomedia) {
     "every post needs an image: pass --shot <path.png>.\n" +
       "A feed is something you look at; a column of text is a log, and nobody reads a log.\n" +
       "If this genuinely cannot have one — it should be rare — say why: --nomedia \"<reason>\"",
+  );
+  process.exit(1);
+}
+if (shot && nomedia) {
+  console.error(
+    "--shot and --nomedia together: --nomedia says why there is no image, and there is one. " +
+      "Drop one. Passing both used to keep the shot and discard the reason silently.",
   );
   process.exit(1);
 }

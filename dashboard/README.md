@@ -26,7 +26,7 @@ this list.
    and install the dev-only comment endpoint:
 
    ```ts
-   import { feedComments } from "./dashboard/vite.feed-comments";
+   import { feedComments } from "./dashboard/vite.feed-comments.ts";
    export default defineConfig({ plugins: [react({ include: [/src\/dashboard\/.*\.tsx?$/] }), feedComments()] });
    ```
 4. Set `"jsx": "react-jsx"` in `tsconfig.json`.

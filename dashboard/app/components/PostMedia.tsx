@@ -11,7 +11,7 @@
 import { useState, type ReactNode } from "react";
 import { bust } from "../format";
 
-type Fit = "pending" | "wide" | "tall";
+type Fit = "pending" | "wide" | "tall" | "pano";
 
 interface Props {
   src: string;
@@ -37,7 +37,11 @@ export function PostMedia({ src, author, nonce }: Props): ReactNode {
         onError={() => setBroken(true)}
         onLoad={(e) => {
           const img = e.currentTarget;
-          setFit(img.naturalHeight > img.naturalWidth * 1.05 ? "tall" : "wide");
+          // Three shapes, not two. A contact sheet or a three-view strip comes
+          // out at 3:1 or wider, and the landscape card crops to 16/9 — which
+          // removes a third of the only thing the post is evidence for.
+          const ratio = img.naturalWidth / Math.max(img.naturalHeight, 1);
+          setFit(ratio < 1 / 1.05 ? "tall" : ratio > 2.2 ? "pano" : "wide");
         }}
       />
     </a>

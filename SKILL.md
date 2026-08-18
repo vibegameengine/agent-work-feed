@@ -190,7 +190,7 @@ Five files you have to write. `vite.config.ts`:
 ```ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
-import { feedComments } from "./dashboard/vite.feed-comments";
+import { feedComments } from "./dashboard/vite.feed-comments.ts";
 
 // Scoped so the plugin only touches the dashboard, and `dashboard.html` is a
 // separate entry, so a production build of index.html never pulls React in.
@@ -214,6 +214,7 @@ export default defineConfig({
     "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
+    "allowImportingTsExtensions": true,
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
@@ -253,7 +254,8 @@ tool call rather than whenever someone remembers to look at the feed:
 
 ```json
 { "hooks": { "PostToolUse": [
-  { "hooks": [{ "type": "command", "command": "node scripts/inbox.mjs", "timeout": 10 }] }
+  { "hooks": [{ "type": "command", "command": "node scripts/inbox.mjs", "timeout": 10,
+                "statusMessage": "Checking work-feed comments" }] }
 ] } }
 ```
 And `CLAUDE.md`, containing the block from step 3 above — the step that decides

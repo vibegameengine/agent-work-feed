@@ -5,7 +5,9 @@ import { writeComment } from "../scripts/comment.mjs";
 export function feedComments(): Plugin {
   return { name: "feed-comments", apply: "serve", configureServer(server) {
     server.middlewares.use("/__feed/comment", (req, res, next) => {
-      if (req.method !== "POST") return next();
+      // use() matches by prefix, so /__feed/comment/anything landed here too.
+      const url = (req.url ?? "").split("?")[0];
+      if (req.method !== "POST" || (url !== "/" && url !== "")) return next();
       let body = "";
       req.on("data", (chunk) => { body += chunk; if (body.length > 100_000) req.destroy(); });
       req.on("end", () => { try {

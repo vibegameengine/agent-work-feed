@@ -235,6 +235,19 @@
   object-position: center 42%;
 }
 
+/* Wider than about 2.2:1 is a sheet, a strip of views, or a before/after pair.
+   The 16/9 crop above would take a third of it, and that third is the evidence.
+   Shown whole, at whatever height it comes out. */
+.post-media.is-pano {
+  width: 100%;
+}
+
+.post-media.is-pano img {
+  width: 100%;
+  aspect-ratio: auto;
+  object-fit: contain;
+}
+
 /* Every portrait attachment is the same width whatever its aspect, so the left
    column of the feed stays stable as you scroll past a run of them. */
 .post-media.is-tall,
