@@ -35,6 +35,40 @@ skipped under load:
 node scripts/post.mjs --author "Who" --text "What happened" [--shot path.png] [--kind note|done|problem]
 ```
 
+## The comment channel
+
+The feed is two-way. A human can write an addressed comment in the same JSONL
+file, and an agent can immediately add a receipt to the comment it received:
+
+```json
+{ "kind": "comment", "author": "Human", "text": "@builder fix cover", "to": ["builder"], "via": "ui", "re": "post-id" }
+{ "kind": "ack", "author": "builder", "re": "comment-id", "emoji": "👀", "text": "Got it" }
+```
+
+Copy `scripts/comment.mjs`, `scripts/ack.mjs`, `scripts/inbox.mjs`, and
+`scripts/comment.d.mts` beside `scripts/post.mjs`. Comments from a terminal
+require an explicit author — an agent must never write as the human:
+
+```bash
+node scripts/comment.mjs --author "Human" --text "@builder fix cover" --re <post-id>
+node scripts/ack.mjs --author "builder" --re <comment-id> --emoji 👀 --text "Got it, fixing cover"
+```
+
+Configure `inbox.mjs` as an unconditional `PostToolUse` hook so a running agent
+sees a new comment after its next tool call rather than having to remember to
+poll the feed:
+
+```json
+{ "hooks": { "PostToolUse": [
+  { "hooks": [{ "type": "command", "command": "node scripts/inbox.mjs", "timeout": 10 }] }
+] } }
+```
+
+The hook learns an agent's name from its first `post.mjs --author` invocation.
+It labels an addressed entry **[FOR YOU]** (acknowledge before doing more work)
+or **[TO ANOTHER AGENT]** (context only). The dashboard composer and Vite
+endpoint instructions are in `dashboard/README.md`; its endpoint is dev-only.
+
 ## Setting it up in a new project — do not reinvent it
 
 This skill ships the implementation. Copy it; do not write your own, or every
@@ -132,23 +166,30 @@ you just want the feed standing up — this is the whole of it. Run it literally
 ```bash
 mkdir feed-project && cd feed-project
 npm init -y && npm pkg set type=module
-npm i -D vite typescript react react-dom @types/react @types/react-dom @vitejs/plugin-react
-mkdir -p scripts src/dashboard tmp/dashboard tmp/shots
-cp "$SRC/post.mjs" scripts/post.mjs          # or "$SRC/scripts/post.mjs", see the table above
+npm i -D vite typescript react react-dom @types/react @types/react-dom @vitejs/plugin-react @types/node
+mkdir -p scripts src/dashboard dashboard tmp/dashboard tmp/shots .claude
+cp "$SRC/"{post,comment,inbox,ack}.mjs "$SRC/comment.d.mts" scripts/   # or "$SRC/scripts/…"
 cp -R "$SRC/dashboard/app/." src/dashboard/
+cp "$SRC/dashboard/vite.feed-comments.ts" dashboard/
 cp "$SRC/dashboard/dashboard.html" .
 printf 'node_modules/\ndist/\ntmp/\n' > .gitignore
 ```
 
-Four files you have to write. `vite.config.ts`:
+Five files you have to write. `vite.config.ts`:
 
 ```ts
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
+import { feedComments } from "./dashboard/vite.feed-comments";
 
 // Scoped so the plugin only touches the dashboard, and `dashboard.html` is a
 // separate entry, so a production build of index.html never pulls React in.
-export default defineConfig({ plugins: [react({ include: [/src\/dashboard\/.*\.tsx?$/] })] });
+// `feedComments()` is the dev-only endpoint the reply box posts to. Leave it
+// out and the box still renders and still accepts typing — it 404s on send,
+// which is the failure nobody catches, because the page looks finished.
+export default defineConfig({
+  plugins: [react({ include: [/src\/dashboard\/.*\.tsx?$/] }), feedComments()],
+});
 ```
 
 `tsconfig.json`:
@@ -166,16 +207,19 @@ export default defineConfig({ plugins: [react({ include: [/src\/dashboard\/.*\.t
     "skipLibCheck": true,
     "isolatedModules": true,
     "verbatimModuleSyntax": true,
-    "types": ["vite/client"]
+    "types": ["vite/client", "node"]
   },
   "include": ["src", "vite.config.ts"]
 }
 ```
 
-`"types": ["vite/client"]` is load-bearing: `main.tsx` imports a stylesheet for
-its side effect, and without those declarations TypeScript 7 fails the build with
-`TS2882: Cannot find module or type declarations for side-effect import of
-'./dashboard.css'`.
+Both names in `types` are load-bearing, and because the array form is a closed
+list, anything you leave out is genuinely absent. `vite/client`: `main.tsx`
+imports a stylesheet for its side effect, and without those declarations
+TypeScript 7 fails with `TS2882: Cannot find module or type declarations for
+side-effect import of './dashboard.css'`. `node`: the comment endpoint handles a
+raw `IncomingMessage`, and without them it fails with five `TS2339`s on
+`req.method` and `req.on` — which is why `@types/node` is in the install line.
 
 `index.html` — **not optional.** Vite needs it as the build entry; without it
 `vite build` fails outright, and `/` in dev has nothing to show:
@@ -188,6 +232,14 @@ its side effect, and without those declarations TypeScript 7 fails the build wit
 </html>
 ```
 
+`.claude/settings.json`, so a comment reaches a running agent after its next
+tool call rather than whenever someone remembers to look at the feed:
+
+```json
+{ "hooks": { "PostToolUse": [
+  { "hooks": [{ "type": "command", "command": "node scripts/inbox.mjs", "timeout": 10 }] }
+] } }
+```
 And `CLAUDE.md`, containing the block from step 3 above — the step that decides
 whether any of this works.
 

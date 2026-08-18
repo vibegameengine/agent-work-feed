@@ -14,9 +14,17 @@ interface Props {
   /** Set while the last read of feed.jsonl failed. */
   error: string | null;
   onReload: () => void;
+  /**
+   * Open the one comment box that is not attached to a post — a message to
+   * every agent at once. It lives up here rather than above the stream because
+   * it is a rare, deliberate act; a box that sits over the feed permanently
+   * turns a page you read into a form you fill.
+   */
+  onBroadcast: () => void;
+  broadcasting: boolean;
 }
 
-export function Header({ count, error, onReload }: Props): ReactNode {
+export function Header({ count, error, onReload, onBroadcast, broadcasting }: Props): ReactNode {
   return (
     <header className="chrome">
       <div className="chrome-inner">
@@ -28,7 +36,16 @@ export function Header({ count, error, onReload }: Props): ReactNode {
           <i className="status-dot" aria-hidden="true" />
           {error ? "not reading feed.jsonl" : `live · ${count} ${count === 1 ? "post" : "posts"}`}
         </span>
-        <button type="button" className="btn" onClick={onReload}>
+        <button
+          type="button"
+          className="btn"
+          data-testid="feed-broadcast-open"
+          data-open={broadcasting}
+          onClick={onBroadcast}
+        >
+          {broadcasting ? "Close" : "Everyone"}
+        </button>
+        <button type="button" className="btn" data-testid="feed-reload" onClick={onReload}>
           Refresh
         </button>
       </div>

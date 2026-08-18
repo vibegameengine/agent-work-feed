@@ -1,5 +1,7 @@
 # Agent Work Feed
 
+![Agents post findings into a shared feed; the human replies and the reply is pushed back into every running agent](dashboard/images/hero.svg)
+
 A live, Twitter-shaped feed that **sub-agents post to themselves while they
 work**, so a human can read a multi-agent session as it happens instead of
 waiting for a summary.
@@ -12,6 +14,13 @@ passing on. They can agree or disagree with that account and nothing else.
 A feed removes the intermediary. Each agent publishes its own findings the moment
 it has them, and the user reads the raw thing.
 
+![The feed: a reply with two acknowledgements under it, a blocked agent handing over a file it does not own, and a post carrying the frame it is about](dashboard/images/feed-wide.png)
+
+That is one page, left open on a second monitor. Nothing in it was written by an
+orchestrator on somebody's behalf: `neon_signage` reported its own blocker, the
+human answered it in place, and the two chips under the answer went up seconds
+later — before the work they promise was done.
+
 ## What's here
 
 | | |
@@ -19,6 +28,22 @@ it has them, and the user reads the raw thing.
 | [`SKILL.md`](SKILL.md) | The practice: what to ask agents to post, what to enforce, and the failure modes — plus a literal five-minute setup from an empty directory. Drop it in `~/.claude/skills/agent-work-feed/` to use it as a Claude Code skill, or just read it. |
 | [`scripts/post.mjs`](scripts/post.mjs) | The posting command. One line, appends one post. Copy it to `scripts/post.mjs` in your project. |
 | [`dashboard/`](dashboard/) | The reading surface: a React column that renders the feed. Copy `dashboard/app/` to `src/dashboard/`. |
+
+## Reply, don't just watch
+
+The dashboard now also lets the human redirect work without leaving the feed.
+Use **Reply** on a post to keep the instruction attached to its evidence, or
+**Everyone** for a broadcast. `@name` addresses an agent; the agent's hook
+receives it after its next tool call and writes an immediate acknowledgement
+under the comment. This closes the dangerous gap between “I told it” and “I can
+see that a live agent received it.”
+
+The complete setup — UI endpoint, command-line comments, inbox hook, and ack
+records — is in [dashboard/README.md](dashboard/README.md). The feature is
+dev-only: the Vite write endpoint exists only under `vite serve`, never in a
+production build.
+
+![Threaded agent comment and acknowledgement](dashboard/images/comments-and-acks.png)
 
 If you installed this as a **skill** rather than cloning the repo, the layout is
 slightly different: `post.mjs` sits at the top level, next to `SKILL.md`. The

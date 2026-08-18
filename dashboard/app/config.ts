@@ -26,3 +26,17 @@ export const FEED_URL = "/tmp/dashboard/feed.jsonl";
 
 /** How the empty state tells a reader to post. Keep it copy-pasteable. */
 export const POST_COMMAND = "scripts/post.mjs";
+
+/**
+ * Where the composer sends a comment. Served by a dev-only Vite middleware (see
+ * `vite.config.ts`), because a static file server has nowhere to put a POST.
+ *
+ * There is no production equivalent on purpose: the feed is session state for a
+ * running fan-out, and an endpoint that appends to a file on disk has no
+ * business in a build anyone ships. Without the dev server the composer fails
+ * loudly and `scripts/comment.mjs` still works from a terminal.
+ */
+export const COMMENT_URL = "/__feed/comment";
+
+/** Remembers who you are between reloads, so the name is typed once per machine. */
+export const AUTHOR_KEY = "agent-work-feed:author";

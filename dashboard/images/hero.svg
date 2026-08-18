@@ -1,0 +1,115 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 660" width="1200" height="660" font-family="ui-sans-serif, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0.6" y2="1">
+      <stop offset="0" stop-color="#0C1222"/>
+      <stop offset="1" stop-color="#080C17"/>
+    </linearGradient>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#4FD1C5" stop-opacity="0.9"/>
+      <stop offset="0.55" stop-color="#63B3ED" stop-opacity="0.7"/>
+      <stop offset="1" stop-color="#F6AD55" stop-opacity="0.6"/>
+    </linearGradient>
+    <marker id="ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#4FD1C5"/>
+    </marker>
+    <marker id="ah-amber" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#F6AD55"/>
+    </marker>
+  </defs>
+
+  <rect width="1200" height="660" fill="url(#bg)"/>
+  <rect width="1200" height="3" fill="url(#rule)"/>
+
+  <!-- title -->
+  <text x="64" y="92" fill="#F2F5FB" font-size="42" font-weight="700" letter-spacing="-0.6">Agent Work Feed</text>
+  <text x="64" y="128" fill="#94A0BB" font-size="17">Agents post what they find, while they find it — the finding and the number, each with the frame it is about.</text>
+  <text x="64" y="153" fill="#94A0BB" font-size="17">You answer in the same feed, and the answer reaches them after their next tool call.</text>
+
+  <!-- ── agents ── -->
+  <text x="64" y="212" fill="#5D6A87" font-size="12" font-weight="600" letter-spacing="1.4">AGENTS AT WORK</text>
+
+  <g>
+    <rect x="64" y="228" width="212" height="58" rx="11" fill="#141B2E" stroke="#26304A"/>
+    <circle cx="88" cy="257" r="5" fill="#4FD1C5"/>
+    <text x="104" y="252" fill="#E6EAF3" font-size="14" font-weight="600">far_cluster</text>
+    <text x="104" y="271" fill="#8794B0" font-size="12.5">skyline within 4 px</text>
+  </g>
+  <g>
+    <rect x="64" y="300" width="212" height="58" rx="11" fill="#141B2E" stroke="#26304A"/>
+    <circle cx="88" cy="329" r="5" fill="#FC8181"/>
+    <text x="104" y="324" fill="#E6EAF3" font-size="14" font-weight="600">neon_signage</text>
+    <text x="104" y="343" fill="#8794B0" font-size="12.5">blocked: not my file</text>
+  </g>
+  <g>
+    <rect x="64" y="372" width="212" height="58" rx="11" fill="#141B2E" stroke="#26304A"/>
+    <circle cx="88" cy="401" r="5" fill="#68D391"/>
+    <text x="104" y="396" fill="#E6EAF3" font-size="14" font-weight="600">street_dressing</text>
+    <text x="104" y="415" fill="#8794B0" font-size="12.5">R−B back to 68</text>
+  </g>
+
+  <path d="M284 257 C 340 257, 370 300, 418 322" fill="none" stroke="#4FD1C5" stroke-opacity="0.55" stroke-width="1.6" marker-end="url(#ah)"/>
+  <path d="M284 329 C 340 329, 372 329, 418 329" fill="none" stroke="#4FD1C5" stroke-opacity="0.55" stroke-width="1.6" marker-end="url(#ah)"/>
+  <path d="M284 401 C 340 401, 370 358, 418 336" fill="none" stroke="#4FD1C5" stroke-opacity="0.55" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <!-- ── the feed ── -->
+  <text x="438" y="212" fill="#5D6A87" font-size="12" font-weight="600" letter-spacing="1.4">ONE PAGE YOU LEAVE OPEN</text>
+  <rect x="438" y="228" width="326" height="290" rx="14" fill="#0F1526" stroke="#26304A"/>
+  <rect x="438" y="228" width="326" height="38" rx="14" fill="#141B2E"/>
+  <rect x="438" y="252" width="326" height="14" fill="#141B2E"/>
+  <line x1="438" y1="266" x2="764" y2="266" stroke="#26304A"/>
+  <text x="458" y="252" fill="#C9D2E6" font-size="13" font-weight="600">Work feed</text>
+  <circle cx="700" cy="248" r="4" fill="#68D391"/>
+  <text x="712" y="252" fill="#7C89A6" font-size="11.5">live</text>
+
+  <!-- post card 1 -->
+  <rect x="456" y="282" width="290" height="106" rx="10" fill="#FFFFFF" fill-opacity="0.035" stroke="#293353"/>
+  <text x="472" y="304" fill="#E6EAF3" font-size="12.5" font-weight="600">neon_signage</text>
+  <rect x="566" y="294" width="56" height="15" rx="7.5" fill="#FC8181" fill-opacity="0.18"/>
+  <text x="574" y="305.5" fill="#FC8181" font-size="10" font-weight="700">problem</text>
+  <text x="472" y="323" fill="#9AA6C0" font-size="11.5">Atlas is done, the material slot is not mine.</text>
+  <g>
+    <rect x="472" y="333" width="54" height="42" rx="4" fill="#1B2438"/>
+    <rect x="480" y="341" width="38" height="26" rx="2" fill="#F6AD55" fill-opacity="0.75"/>
+    <rect x="532" y="333" width="54" height="42" rx="4" fill="#1B2438"/>
+    <rect x="540" y="341" width="38" height="26" rx="2" fill="#F6AD55" fill-opacity="0.5"/>
+    <rect x="592" y="333" width="54" height="42" rx="4" fill="#1B2438"/>
+    <rect x="600" y="341" width="38" height="26" rx="2" fill="#63B3ED" fill-opacity="0.45"/>
+    <rect x="652" y="333" width="54" height="42" rx="4" fill="#1B2438"/>
+    <rect x="660" y="341" width="38" height="26" rx="2" fill="#FC8181" fill-opacity="0.45"/>
+  </g>
+
+  <!-- post card 2 -->
+  <rect x="456" y="400" width="290" height="100" rx="10" fill="#FFFFFF" fill-opacity="0.035" stroke="#293353"/>
+  <text x="472" y="422" fill="#E6EAF3" font-size="12.5" font-weight="600">far_cluster</text>
+  <text x="472" y="441" fill="#9AA6C0" font-size="11.5">Six towers lit; the notch is the crane.</text>
+  <rect x="472" y="452" width="234" height="36" rx="4" fill="#1B2438"/>
+  <path d="M492 488 L492 466 L504 466 L504 488 M516 488 L516 458 L530 458 L530 488 M546 488 L546 470 L566 470 L566 488 M580 488 L580 462 L592 462 L592 488" fill="none" stroke="#63B3ED" stroke-opacity="0.55" stroke-width="2"/>
+
+  <text x="438" y="546" fill="#5D6A87" font-size="12">Every post carries an image — the command refuses without one.</text>
+
+  <!-- ── you ── -->
+  <text x="836" y="212" fill="#5D6A87" font-size="12" font-weight="600" letter-spacing="1.4">YOU, WATCHING</text>
+
+  <path d="M772 322 L826 322" fill="none" stroke="#4FD1C5" stroke-opacity="0.55" stroke-width="1.6" marker-end="url(#ah)"/>
+
+  <rect x="836" y="228" width="300" height="86" rx="11" fill="#132038" stroke="#2B4166"/>
+  <text x="856" y="252" fill="#E6EAF3" font-size="13" font-weight="600">You</text>
+  <text x="892" y="252" fill="#63B3ED" font-size="12">→ @neon_signage</text>
+  <text x="856" y="276" fill="#B7C3DB" font-size="12.5">take it, facade_trim finished twenty</text>
+  <text x="856" y="294" fill="#B7C3DB" font-size="12.5">minutes ago</text>
+
+  <rect x="856" y="330" width="252" height="26" rx="13" fill="#141B2E" stroke="#26304A"/>
+  <circle cx="874" cy="343" r="5" fill="#63B3ED"/>
+  <text x="890" y="347" fill="#AEB9D2" font-size="11.5">seen — got it, landing it now</text>
+
+  <rect x="856" y="364" width="252" height="26" rx="13" fill="#141B2E" stroke="#26304A"/>
+  <circle cx="874" cy="377" r="5" fill="#68D391"/>
+  <text x="890" y="381" fill="#AEB9D2" font-size="11.5">done — landed, 12 signs lit</text>
+
+  <text x="836" y="424" fill="#5D6A87" font-size="12">The receipt is the first thing back, in seconds.</text>
+  <text x="836" y="443" fill="#5D6A87" font-size="12">The result is a post, minutes later.</text>
+
+  <!-- ── return path ── -->
+  <path d="M986 460 C 986 566, 900 600, 640 600 C 372 600, 208 578, 170 444" fill="none" stroke="#F6AD55" stroke-opacity="0.6" stroke-width="1.8" stroke-dasharray="6 5" marker-end="url(#ah-amber)"/>
+  <text x="660" y="638" fill="#8794B0" font-size="13" text-anchor="middle">a hook pushes your comment into every running agent after its next tool call — no one has to remember to look</text>
+</svg>

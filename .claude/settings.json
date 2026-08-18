@@ -1,0 +1,16 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node scripts/inbox.mjs",
+            "timeout": 10,
+            "statusMessage": "Checking work-feed comments"
+          }
+        ]
+      }
+    ]
+  }
+}

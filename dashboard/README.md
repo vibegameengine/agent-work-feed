@@ -13,12 +13,19 @@ this list.
 
 ## Wiring it into a Vite project
 
-1. Copy `app/` to `src/dashboard/` and `dashboard.html` to the project root.
+1. Copy `app/` to `src/dashboard/`, `dashboard.html` to the project root, and
+   `vite.feed-comments.ts` to `dashboard/` (or another project-local dev-tools path).
 2. `npm i -D react react-dom @types/react @types/react-dom @vitejs/plugin-react`
    — the `@types/*` two are not optional; `tsc` fails without them.
 3. Add `@vitejs/plugin-react` to `vite.config.ts`, scoped to the dashboard so it
    does not process the rest of the project:
    `react({ include: [/src\/dashboard\/.*\.tsx?$/] })`
+   and install the dev-only comment endpoint:
+
+   ```ts
+   import { feedComments } from "./dashboard/vite.feed-comments";
+   export default defineConfig({ plugins: [react({ include: [/src\/dashboard\/.*\.tsx?$/] }), feedComments()] });
+   ```
 4. Set `"jsx": "react-jsx"` in `tsconfig.json`.
 5. **Edit `src/dashboard/config.ts`.** It is the only file in `app/` that names a
    project: `BRAND` (the bar, top left), `TITLE`, `LEDE` (the line under the
@@ -51,3 +58,43 @@ No metrics strip, no agent-ownership table, no live embeds of the build under
 review, no before/after panel. Each is obviously useful in isolation, and
 together they turn a thing people read into a thing people scan once and close.
 Anything worth showing goes inside a post.
+
+## Human comments, delivery, and acknowledgements
+
+The dashboard is bidirectional. **Everyone** opens a deliberately separate
+broadcast composer. **Reply** opens the composer beneath the specific post it
+answers; `@agent` mentions make an addressed comment, while no mention is a
+broadcast. Comments are written to the same append-only JSONL stream with
+`kind: "comment"`, `to`, optional `re` (parent post), and `via: "ui"`.
+
+The Vite endpoint above is deliberately `apply: "serve"`: it appends to a local
+file and must never exist in a production build. The command-line equivalent is:
+
+```bash
+node scripts/comment.mjs --author "Human" --text "@builder Make the cover block enemy fire" --re <post-id>
+```
+
+`--author` is mandatory at the CLI so an agent cannot accidentally write under
+the human's name. UI comments are marked `via: "ui"`; CLI comments are marked
+`via: "cli"`, which the dashboard renders as an agent-authored message.
+
+For running Codex/Claude-style agents, configure `scripts/inbox.mjs` as a
+`PostToolUse` hook. It learns an agent's stable name from its first
+`post.mjs --author` command, reads only new complete JSONL lines, and injects:
+
+- **[FOR YOU]** — an instruction to acknowledge *before* another tool call;
+- **[TO ANOTHER AGENT]** — context, not work to steal;
+- every addressed item for the main orchestrator, which must route it directly.
+
+Agents acknowledge with a cheap record rather than waiting for the eventual
+result:
+
+```bash
+node scripts/ack.mjs --author "builder" --re <comment-id> --emoji 👀 --text "Got it, fixing cover occlusion"
+```
+
+The four conventional states are `👀` seen, `🔧` working, `✅` done, and `❌`
+cannot. Receipts are threaded below the comment so the person who gave the
+instruction can tell within seconds that it reached a live agent.
+
+![Addressed comment with an immediate acknowledgement](images/comments-and-acks.png)

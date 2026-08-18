@@ -27,12 +27,14 @@
 /* ---- the post -------------------------------------------------------- */
 
 .post {
+  position: relative;
   background: var(--surface);
   border-radius: var(--r-xl);
   padding: 22px 26px 26px;
   box-shadow: var(--shadow-1), var(--surface-lift);
   animation: post-in 520ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
 }
+
 
 @keyframes post-in {
   from {
@@ -71,6 +73,9 @@
   flex-wrap: wrap;
   gap: 4px 10px;
   margin-bottom: 8px;
+  /* The reply control is absolutely positioned in this corner; the head line
+     keeps its seat empty so a long author + addressee never runs under it. */
+  padding-right: 68px;
 }
 
 .post-author {
@@ -104,6 +109,73 @@
   color: var(--ink-3);
   white-space: nowrap;
   cursor: help;
+}
+
+/* Who has to act. Addressed comments carry the accent; a broadcast stays quiet,
+   because "→ everyone" is the default case and does not need to be sold. */
+.tag-to {
+  font-size: var(--fs-meta);
+  font-weight: 600;
+  letter-spacing: 0;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
+.tag-to.is-all {
+  font-weight: 500;
+  color: var(--ink-3);
+}
+
+/* Reply lives in the corner and appears on hover, so fifteen cards do not each
+   carry a repeated verb down the column. It is absolutely positioned, so
+   showing it never changes a card's height and the column cannot twitch. */
+.post-reply {
+  position: absolute;
+  top: 16px;
+  right: 18px;
+  border: 0;
+  background: none;
+  padding: 4px 6px;
+  border-radius: var(--r-xs);
+  color: var(--ink-3);
+  font: inherit;
+  font-size: var(--fs-meta);
+  letter-spacing: 0;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 160ms ease, color 160ms ease;
+}
+
+.post:hover .post-reply,
+.post:focus-within .post-reply,
+/* While its box is open the control has to stay visible, or the only thing
+   naming what the box below belongs to disappears the moment you move the
+   mouse. */
+.post-reply[data-open="true"] {
+  opacity: 1;
+}
+
+.post-reply[data-open="true"] {
+  color: var(--accent);
+}
+
+.post-reply:hover {
+  color: var(--accent);
+  background: var(--fill-1);
+}
+
+.post-reply:focus-visible {
+  opacity: 1;
+  outline: none;
+  box-shadow: var(--ring);
+}
+
+/* Without hover there is no way to discover a hidden control, so on touch it
+   is simply always there. */
+@media (hover: none) {
+  .post-reply {
+    opacity: 1;
+  }
 }
 
 .post-body {
