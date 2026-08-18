@@ -43,7 +43,28 @@
 import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 
-const FEED = process.env.FEED_FILE ?? "tmp/dashboard/feed.jsonl";
+
+/**
+ * The project root: the nearest directory at or above `from` holding a
+ * package.json or a .git. The feed path is relative, and resolving it against
+ * whatever directory the command happened to run in wrote the post to a shadow
+ * feed under that subdirectory — reported as posted, exit 0, read by nobody.
+ * Returns null when there is no marker above `from`, so the caller can decide:
+ * a path handed in from outside may simply be wrong, and walking from a wrong
+ * place must not look like walking from the right one.
+ */
+function projectRoot(from = process.cwd()) {
+  let dir = path.resolve(from);
+  for (;;) {
+    if (existsSync(path.join(dir, "package.json")) || existsSync(path.join(dir, ".git"))) return dir;
+    const up = path.dirname(dir);
+    if (up === dir) return null;
+    dir = up;
+  }
+}
+
+const ROOT = projectRoot() ?? process.cwd();
+const FEED = process.env.FEED_FILE ?? path.join(ROOT, "tmp/dashboard/feed.jsonl");
 const MAX_CHARS = 250;
 /** Total characters of URL and path one post may carry for free. */
 const MAX_FREE = 500;
@@ -128,10 +149,10 @@ if (shot) {
   // root-relative URL. A shot outside that root has no URL at all — the browser
   // would ask for `/../../private/tmp/...` and render a broken image — so it is
   // refused here rather than written and discovered by eye.
-  const rel = path.relative(process.cwd(), path.resolve(shot));
+  const rel = path.relative(ROOT, path.resolve(shot));
   if (rel.startsWith("..") || path.isAbsolute(rel)) {
     console.error(
-      `--shot ${shot} is outside the project root (${process.cwd()}).\n` +
+      `--shot ${shot} is outside the project root (${ROOT}).\n` +
         `The dashboard can only load images the dev server serves. Copy it inside first — ` +
         `tmp/shots/ is the usual place — and pass that path.`,
     );

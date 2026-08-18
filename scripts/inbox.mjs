@@ -38,8 +38,30 @@ import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, sta
 import path from "node:path";
 import { addressedTo } from "./comment.mjs";
 
-const FEED = process.env.FEED_FILE ?? "tmp/dashboard/feed.jsonl";
-const STATE_DIR = process.env.FEED_INBOX_DIR ?? "tmp/dashboard/inbox";
+
+/**
+ * The project root: the nearest directory at or above `from` holding a
+ * package.json or a .git. The feed path is relative, and resolving it against
+ * whatever directory the command happened to run in wrote the post to a shadow
+ * feed under that subdirectory — reported as posted, exit 0, read by nobody.
+ * Returns null when there is no marker above `from`, so the caller can decide:
+ * a path handed in from outside may simply be wrong, and walking from a wrong
+ * place must not look like walking from the right one.
+ */
+function projectRoot(from = process.cwd()) {
+  let dir = path.resolve(from);
+  for (;;) {
+    if (existsSync(path.join(dir, "package.json")) || existsSync(path.join(dir, ".git"))) return dir;
+    const up = path.dirname(dir);
+    if (up === dir) return null;
+    dir = up;
+  }
+}
+
+// Resolved against the hook's own cwd once the payload is read, below. A hook
+// does not run where the agent thinks it does.
+let FEED = process.env.FEED_FILE ?? "tmp/dashboard/feed.jsonl";
+let STATE_DIR = process.env.FEED_INBOX_DIR ?? "tmp/dashboard/inbox";
 
 /**
  * How far back a session looks the first time it is seen. An agent's first hook
@@ -232,6 +254,16 @@ try {
  * inboxes, and its ABSENCE identifies the main session — which is the
  * orchestrator by construction, with no naming convention to get wrong.
  */
+/**
+ * The payload carries the session's cwd, and this script used to ignore it and
+ * resolve the feed against its own — so a hook firing anywhere but the project
+ * root found no feed, exited 0, and delivered nothing. Silently: an empty inbox
+ * and a dead channel look identical from the outside.
+ */
+const ROOT = projectRoot(hook.cwd) ?? projectRoot() ?? process.cwd();
+if (!process.env.FEED_FILE) FEED = path.join(ROOT, "tmp/dashboard/feed.jsonl");
+if (!process.env.FEED_INBOX_DIR) STATE_DIR = path.join(ROOT, "tmp/dashboard/inbox");
+
 const sessionId = hook.session_id ?? "unknown";
 const agentId = hook.agent_id;
 const isMain = !agentId;

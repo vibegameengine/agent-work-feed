@@ -30,7 +30,28 @@ import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const FEED = process.env.FEED_FILE ?? "tmp/dashboard/feed.jsonl";
+
+/**
+ * The project root: the nearest directory at or above `from` holding a
+ * package.json or a .git. The feed path is relative, and resolving it against
+ * whatever directory the command happened to run in wrote the post to a shadow
+ * feed under that subdirectory — reported as posted, exit 0, read by nobody.
+ * Returns null when there is no marker above `from`, so the caller can decide:
+ * a path handed in from outside may simply be wrong, and walking from a wrong
+ * place must not look like walking from the right one.
+ */
+function projectRoot(from = process.cwd()) {
+  let dir = path.resolve(from);
+  for (;;) {
+    if (existsSync(path.join(dir, "package.json")) || existsSync(path.join(dir, ".git"))) return dir;
+    const up = path.dirname(dir);
+    if (up === dir) return null;
+    dir = up;
+  }
+}
+
+const ROOT = projectRoot() ?? process.cwd();
+const FEED = process.env.FEED_FILE ?? path.join(ROOT, "tmp/dashboard/feed.jsonl");
 
 /** Long enough for "Got it, fixing exposure, ~5 min"; short enough that it cannot become a report. */
 const MAX_CHARS = 120;
@@ -58,6 +79,14 @@ export function writeAck({ author, re, emoji, text, feedFile = FEED } = {}) {
   }
 
   const mark = String(emoji ?? "").trim() || EMOJI.seen;
+  // The set is fixed, so it has to be enforced: a reader who has learned four
+  // glyphs should not have to decode a fifth invented by one agent.
+  if (!Object.values(EMOJI).includes(mark)) {
+    throw new Error(
+      `--emoji ${mark} is not one of the four: ${Object.values(EMOJI).join(" ")} ` +
+        "(seen, working, done, cannot). An ack is read at a glance, not parsed.",
+    );
+  }
 
   const record = {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
@@ -86,7 +115,16 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
     // A typo in the id produces an ack that hangs under nothing and is invisible
     // — which looks exactly like not having acknowledged at all, the one failure
     // this command exists to prevent. So it is caught here.
-    if (re && existsSync(FEED)) {
+    if (re) {
+      // Guarding this with existsSync made it dead where it mattered most: with
+      // no feed yet, every id is unknown, and the check waved them all through.
+      // No feed is not a reason to skip the check — it is the same failure.
+      if (!existsSync(FEED)) {
+        throw new Error(
+          `there is no feed at ${FEED} yet, so an ack cannot point at anything. ` +
+            "An ack answers a comment that exists; post or comment first.",
+        );
+      }
       const known = readFileSync(FEED, "utf8").includes(`"id":"${re}"`);
       if (!known) {
         throw new Error(

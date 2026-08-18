@@ -39,22 +39,45 @@
  *   node scripts/comment.mjs --to roof_deck,neon --text "..." [--re <post id>] [--author "Who"]
  */
 
-import { appendFileSync, mkdirSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
 
-const FEED = process.env.FEED_FILE ?? "tmp/dashboard/feed.jsonl";
+
+/**
+ * The project root: the nearest directory at or above `from` holding a
+ * package.json or a .git. The feed path is relative, and resolving it against
+ * whatever directory the command happened to run in wrote the post to a shadow
+ * feed under that subdirectory — reported as posted, exit 0, read by nobody.
+ * Returns null when there is no marker above `from`, so the caller can decide:
+ * a path handed in from outside may simply be wrong, and walking from a wrong
+ * place must not look like walking from the right one.
+ */
+function projectRoot(from = process.cwd()) {
+  let dir = path.resolve(from);
+  for (;;) {
+    if (existsSync(path.join(dir, "package.json")) || existsSync(path.join(dir, ".git"))) return dir;
+    const up = path.dirname(dir);
+    if (up === dir) return null;
+    dir = up;
+  }
+}
+
+const ROOT = projectRoot() ?? process.cwd();
+const FEED = process.env.FEED_FILE ?? path.join(ROOT, "tmp/dashboard/feed.jsonl");
 
 /** Ten times the post cap. An instruction may carry its reasoning; a post may not. */
 const MAX_CHARS = 2000;
 
 /**
- * Addressee tokens that mean "everybody". Written in both languages the feed is
- * read in. Russian aliases remain accepted for compatibility, because a comment
- * addressed to everyone that silently reaches nobody defeats the feature.
- * the exact failure this channel exists to prevent.
+ * Addressee tokens that mean "everybody", in both languages the feed is read in.
+ * The Russian ones are here because they were typed at it: `@всем не трогайте
+ * Content/Materials` has to broadcast. Drop them and that comment addresses a
+ * literal agent named "всем", reaches nobody, and is delivered to everyone else
+ * as context they must not act on — silently, which is the exact failure this
+ * channel exists to prevent.
  */
-const EVERYONE = new Set(["all", "everyone"]);
+const EVERYONE = new Set(["all", "everyone", "все", "всем", "всех"]);
 
 /**
  * Comparison form for an addressee. Authors are written for humans ("Builder:
