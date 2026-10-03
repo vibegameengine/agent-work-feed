@@ -29,6 +29,7 @@
 import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import path from "node:path";
 import { pathToFileURL } from "node:url";
+import { knownInHistory } from "./lib/feedArchive.mjs";
 
 
 /**
@@ -127,7 +128,7 @@ if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) 
             "An ack answers a comment that exists; post or comment first.",
         );
       }
-      const known = readFileSync(FEED, "utf8").includes(`"id":"${re}"`);
+      const known = readFileSync(FEED, "utf8").includes(`"id":"${re}"`) || knownInHistory(FEED, re);
       if (!known) {
         throw new Error(
           `no entry with id ${re} in the feed. Copy the id from the delivered comment — ` +

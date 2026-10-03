@@ -159,6 +159,23 @@ there, and shipping it unedited leaves the page branded "Your project".
 [`dashboard/README.md`](dashboard/README.md) has the details, including the Vite
 plugin scoping that keeps React out of your production bundle.
 
+## Archive
+
+The feed only grows, and the dashboard downloads and redraws all of it on every
+post. Past 80 KB the inbox hook warns once per session (again every further
+40 KB) and names the command. Archiving is a person's decision, never an
+agent's: the command refuses to run without a terminal.
+
+```bash
+node scripts/feed-archive.mjs [--keep-days 2]
+node scripts/feed-history.mjs --search <text> | --author <name> | --id <id> [--since <date>] [--limit 20]
+```
+
+Old entries move to `tmp/dashboard/archive/feed-<from>_<to>.jsonl`. Every
+agent's inbox cursor is moved with them, so nobody is shown the feed again, and
+`ack.mjs` still accepts an id that is now in the archive. `feed-history.mjs`
+reads the archive and the live feed as one history.
+
 ## Related
 
 [Gauntlet Loop](https://github.com/vibegameengine/gauntlet-loop) — the

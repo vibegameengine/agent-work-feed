@@ -37,6 +37,7 @@
 import { closeSync, existsSync, mkdirSync, openSync, readFileSync, readSync, statSync, writeFileSync } from "node:fs";
 import path from "node:path";
 import { addressedTo } from "./comment.mjs";
+import { feedWarning, theDashboardRedrawsIt } from "./lib/feedArchive.mjs";
 
 
 /**
@@ -294,10 +295,21 @@ if (firstRun) {
 const me = state.author;
 if (me) comments = comments.filter((c) => c.author !== me);
 
+const warning = feedWarning(FEED, state.warnedAtBytes, theDashboardRedrawsIt);
+if (warning) state.warnedAtBytes = warning.bytes;
 state.offset = end;
 saveState(stateKey, state);
 
-if (comments.length === 0) process.exit(0);
+function warnOnly() {
+  if (!warning) process.exit(0);
+  process.stdout.write(JSON.stringify({
+    systemMessage: warning.text,
+    hookSpecificOutput: { hookEventName: hook.hook_event_name ?? "PostToolUse", additionalContext: warning.text },
+  }));
+  process.exit(0);
+}
+
+if (comments.length === 0) warnOnly();
 
 const mine = comments.filter((c) => addressedTo(c.to, me));
 const others = comments.filter((c) => !mine.includes(c));
@@ -314,7 +326,7 @@ const others = comments.filter((c) => !mine.includes(c));
  */
 const anonymous = !isMain && !me;
 const deliverOthers = anonymous ? [] : others;
-if (mine.length + deliverOthers.length === 0) process.exit(0);
+if (mine.length + deliverOthers.length === 0) warnOnly();
 
 const summary =
   mine.length > 0
@@ -324,7 +336,7 @@ const summary =
 
 process.stdout.write(
   JSON.stringify({
-    systemMessage: summary,
+    systemMessage: warning ? `${summary}\n${warning.text}` : summary,
     hookSpecificOutput: {
       hookEventName: hook.hook_event_name ?? "PostToolUse",
       additionalContext: render(mine, deliverOthers, { anonymous, isMain }),
