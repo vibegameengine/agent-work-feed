@@ -71,6 +71,7 @@ let STATE_DIR = process.env.FEED_INBOX_DIR ?? "tmp/dashboard/inbox";
  * Starting every new session at end-of-file would drop exactly those.
  */
 const BACKLOG_MS = 15 * 60 * 1000;
+const CONTEXT_CUT_AT = 100;
 
 async function readStdin() {
   const chunks = [];
@@ -212,7 +213,9 @@ function render(mine, others, { anonymous, isMain }) {
   for (const c of others) {
     lines.push("");
     const to = Array.isArray(c.to) ? c.to.join(", ") : "?";
-    lines.push(`[${isMain ? "TO AGENT" : "TO ANOTHER AGENT"} → ${to}] ${c.author}${source(c)}: ${c.text}`);
+    const shortened = !isMain && c.via !== "ui" && c.text.length > CONTEXT_CUT_AT;
+    const text = shortened ? `${c.text.slice(0, CONTEXT_CUT_AT).trimEnd()}… (whole: node scripts/feed-history.mjs --id ${c.id})` : c.text;
+    lines.push(`[${isMain ? "TO AGENT" : "TO ANOTHER AGENT"} → ${to}] ${c.author}${source(c)}: ${text}`);
     if (c.re) lines.push(`  (re: post ${c.re})`);
   }
   if (others.length > 0) {
